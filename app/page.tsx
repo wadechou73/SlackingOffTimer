@@ -15,6 +15,7 @@ const defaultSchedule: ScheduleConfig = {
 };
 
 export default function HomePage() {
+  const [isReady, setIsReady] = useState(false);
   const [isConfigured, setIsConfigured] = useState(false);
   const [workMinutes, setWorkMinutes] = useState(defaultSchedule.workMinutes);
   const [restPolicy, setRestPolicy] = useState(defaultSchedule.restPolicy);
@@ -25,7 +26,18 @@ export default function HomePage() {
       setWorkMinutes(savedSchedule.workMinutes);
       setRestPolicy(savedSchedule.restPolicy);
     }
-    setIsConfigured(getConfigured());
+
+    const configured = getConfigured();
+    // Backward compatibility: if schedule exists but configured flag is missing,
+    // treat the user as configured and persist the marker.
+    if (!configured && savedSchedule) {
+      setConfigured(true);
+      setIsConfigured(true);
+    } else {
+      setIsConfigured(configured);
+    }
+
+    setIsReady(true);
   }, []);
 
   const todaySlackMinutes = useMemo(() => Math.round(workMinutes * 0.22), [workMinutes]);
@@ -44,6 +56,10 @@ export default function HomePage() {
     setConfigured(true);
     setIsConfigured(true);
   };
+
+  if (!isReady) {
+    return null;
+  }
 
   if (!isConfigured) {
     return (
